@@ -1,0 +1,3 @@
+Issues:
+1. Second and all next client's data are not received.
+2. Bad client disconnection handlng.
