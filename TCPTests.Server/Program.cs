@@ -111,16 +111,17 @@ namespace TCP_Tests
 
 		private static void HandleIncomingMessage(object sender, SocketAsyncEventArgs args)
 		{
-			var socket = (Socket) sender;
-			var buffer = new byte[socket.ReceiveBufferSize];
+			var clientSocket = (Socket)sender;
+			var buffer = new byte[clientSocket.ReceiveBufferSize];
 
 			var bytesRead = 0;
 			int counter;
 			do
 			{
-				counter = socket.Receive(buffer, SocketFlags.None);
+				counter = clientSocket.Receive(buffer, SocketFlags.None);
 				bytesRead += counter;
-			} while (socket.Available > 0 && counter > 0);
+			} 
+			while (clientSocket.Available > 0 && counter > 0);
 
 			var list = new List<byte>(buffer.Take(bytesRead));
 
@@ -133,7 +134,7 @@ namespace TCP_Tests
 			args.Dispose();
 			args = null;
 
-			ResetEvents[socket].Set();
+			ResetEvents[clientSocket].Set();
 		}
 	}
 }
