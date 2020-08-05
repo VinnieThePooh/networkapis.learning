@@ -7,9 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using NLog.LayoutRenderers;
 using TCPTests.Common.Models;
 
 namespace TCP_Tests
@@ -121,7 +119,7 @@ namespace TCP_Tests
 				counter = clientSocket.Receive(buffer, SocketFlags.None);
 				bytesRead += counter;
 			} 
-			while (clientSocket.Available > 0 && counter > 0);
+			while ((clientSocket.Available & counter) > 0);
 
 			var list = new List<byte>(buffer.Take(bytesRead));
 

@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		todos.txt = todos.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPTests.NetworkFileReceiver", "TCPTests.NetworkFileReceiver\TCPTests.NetworkFileReceiver.csproj", "{A3CE7A29-3865-4EA1-BFC9-E560EF82F587}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPTests.NetworkFileReceiver.Common", "TCPTests.NetworkFileReceiver.Common\TCPTests.NetworkFileReceiver.Common.csproj", "{60A7B6CB-55FD-4870-AAEE-E7F0475BF7C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{3D49739E-465D-4C60-B0E6-01D2F1850B8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D49739E-465D-4C60-B0E6-01D2F1850B8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D49739E-465D-4C60-B0E6-01D2F1850B8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3CE7A29-3865-4EA1-BFC9-E560EF82F587}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3CE7A29-3865-4EA1-BFC9-E560EF82F587}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3CE7A29-3865-4EA1-BFC9-E560EF82F587}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3CE7A29-3865-4EA1-BFC9-E560EF82F587}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60A7B6CB-55FD-4870-AAEE-E7F0475BF7C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60A7B6CB-55FD-4870-AAEE-E7F0475BF7C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60A7B6CB-55FD-4870-AAEE-E7F0475BF7C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60A7B6CB-55FD-4870-AAEE-E7F0475BF7C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
