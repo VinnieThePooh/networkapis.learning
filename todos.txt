@@ -1,3 +1,5 @@
 Issues:
 1. Second and all next client's data are not received.
 2. Bad client disconnection handlng.
+4. Consumes a lot of memory...
+5. Does not react immediately in some of time (as a result of issue 4)
