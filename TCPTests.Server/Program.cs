@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using TCPTests.Common.Models;
 
@@ -42,12 +43,8 @@ namespace TCP_Tests
 			{
 				while (true)
 				{
-					var acceptArgs = new SocketAsyncEventArgs();
-					acceptArgs.Completed += HandleNewConnection;
-
-					var isAsync = socketListener.AcceptAsync(acceptArgs);
-					if (!isAsync)
-						HandleNewConnection(socketListener, acceptArgs);
+					var clientSocket = socketListener.Accept();
+					HandleNewConnection(clientSocket);
 				}
 			}
 			catch (Exception e)
@@ -63,48 +60,40 @@ namespace TCP_Tests
 		}
 
 
-		private static void HandleNewConnection(object sender, SocketAsyncEventArgs args)
+		private static void HandleNewConnection(Socket clientSocket)
 		{
-			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine(
-				$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: Completed event fired");
-			Console.ResetColor();
-
-			var clientSocket = args.AcceptSocket;
-
-
 			Console.WriteLine(
 				$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: AcceptSocket connected: {clientSocket.Connected}");
 
-			var resetEvent = ResetEvents.GetOrAdd(clientSocket, (s) => new ManualResetEvent(false));
-
-			var epoint = (IPEndPoint) clientSocket.RemoteEndPoint;
-			clientSocket.ReceiveBufferSize = 1024;
-
-			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine(
-				$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: New client connected: {epoint.Address}:{epoint.Port}");
-			Console.ResetColor();
-
-			args.Completed -= HandleNewConnection;
-			args.Dispose();
-			args = null;
-
-			while (clientSocket.Connected)
+			Task.Run(() =>
 			{
-				var receiveArgs = new SocketAsyncEventArgs();
-				receiveArgs.Completed += HandleIncomingMessage;
-				var isAsync = clientSocket.ReceiveAsync(receiveArgs);
-				if (!isAsync)
-					HandleIncomingMessage(clientSocket, receiveArgs);
-				else
-					resetEvent.WaitOne();
-			}
+				var resetEvent = ResetEvents.GetOrAdd(clientSocket, (s) => new ManualResetEvent(false));
 
-			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine(
-				$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: Client disconnected: {epoint.Address}:{epoint.Port}");
-			Console.ResetColor();
+				var epoint = (IPEndPoint)clientSocket.RemoteEndPoint;
+				clientSocket.ReceiveBufferSize = 1024;
+
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine(
+					$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: New client connected: {epoint.Address}:{epoint.Port}");
+				Console.ResetColor();
+
+				while (clientSocket.Connected)
+				{
+					var receiveArgs = new SocketAsyncEventArgs();
+					receiveArgs.Completed += HandleIncomingMessage;
+					var isAsync = clientSocket.ReceiveAsync(receiveArgs);
+					if (!isAsync)
+						HandleIncomingMessage(clientSocket, receiveArgs);
+					else
+						resetEvent.WaitOne();
+				}
+
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine(
+					$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: Client disconnected: {epoint.Address}:{epoint.Port}");
+				Console.ResetColor();
+			});
+
 		}
 
 		private static void HandleIncomingMessage(object sender, SocketAsyncEventArgs args)
