@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,9 +63,6 @@ namespace TCP_Tests
 
 		private static void HandleNewConnection(Socket clientSocket)
 		{
-			Console.WriteLine(
-				$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: AcceptSocket connected: {clientSocket.Connected}");
-
 			Task.Run(() =>
 			{
 				var resetEvent = ResetEvents.GetOrAdd(clientSocket, (s) => new ManualResetEvent(false));
@@ -79,13 +77,7 @@ namespace TCP_Tests
 
 				while (clientSocket.Connected)
 				{
-					var receiveArgs = new SocketAsyncEventArgs();
-					receiveArgs.Completed += HandleIncomingMessage;
-					var isAsync = clientSocket.ReceiveAsync(receiveArgs);
-					if (!isAsync)
-						HandleIncomingMessage(clientSocket, receiveArgs);
-					else
-						resetEvent.WaitOne();
+					HandleIncomingMessage(clientSocket);
 				}
 
 				Console.ForegroundColor = ConsoleColor.Green;
@@ -96,11 +88,10 @@ namespace TCP_Tests
 
 		}
 
-		private static void HandleIncomingMessage(object sender, SocketAsyncEventArgs args)
+		private static void HandleIncomingMessage(Socket clientSocket)
 		{
-			var clientSocket = (Socket)sender;
 			var buffer = new byte[clientSocket.ReceiveBufferSize];
-
+			
 			var bytesRead = 0;
 			int counter;
 			do
@@ -108,7 +99,10 @@ namespace TCP_Tests
 				counter = clientSocket.Receive(buffer, SocketFlags.None);
 				bytesRead += counter;
 			} 
-			while ((clientSocket.Available & counter) > 0);
+			while (clientSocket.Available > 0);
+
+			if (bytesRead == 0)
+				 return;
 
 			var list = new List<byte>(buffer.Take(bytesRead));
 
@@ -117,10 +111,6 @@ namespace TCP_Tests
 			Console.WriteLine($"[Thread-{Thread.CurrentThread.ManagedThreadId}][Message]: {message}");
 
 			list.Clear();
-			args.Completed -= HandleIncomingMessage;
-			args.Dispose();
-			args = null;
-
 			ResetEvents[clientSocket].Set();
 		}
 	}
