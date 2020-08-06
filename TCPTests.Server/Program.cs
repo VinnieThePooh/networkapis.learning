@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +17,12 @@ namespace TCP_Tests
 {
 	internal class Program
 	{
-		private static ConcurrentDictionary<Socket, ManualResetEvent> ResetEvents { get; } =
-			new ConcurrentDictionary<Socket, ManualResetEvent>();
+		private static Socket _socketListener;
 
 		private static void Main(string[] args)
 		{
+			Console.CancelKeyPress += Console_CancelKeyPress;
+
 			var builder = new ConfigurationBuilder()
 				.SetBasePath(Directory.GetCurrentDirectory())
 				.AddJsonFile("appsettings.json", true, true);
@@ -30,9 +32,9 @@ namespace TCP_Tests
 			var hostConf = HostConfiguration.FromConfiguration(confRoot);
 
 
-			var socketListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			socketListener.Bind(new IPEndPoint(IPAddress.Parse(hostConf.Address), hostConf.Port));
-			socketListener.Listen(10);
+			_socketListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			_socketListener.Bind(new IPEndPoint(IPAddress.Parse(hostConf.Address), hostConf.Port));
+			_socketListener.Listen(10);
 			Console.ForegroundColor = ConsoleColor.Green;
 			Console.WriteLine(
 				$"[Thread-{Thread.CurrentThread.ManagedThreadId}][System]: Entry point ThreadId: {Thread.CurrentThread.ManagedThreadId}");
@@ -44,7 +46,7 @@ namespace TCP_Tests
 			{
 				while (true)
 				{
-					var clientSocket = socketListener.Accept();
+					var clientSocket = _socketListener.Accept();
 					HandleNewConnection(clientSocket);
 				}
 			}
@@ -56,17 +58,14 @@ namespace TCP_Tests
 			finally
 			{
 				Console.WriteLine("Server ends");
-				socketListener.Shutdown(SocketShutdown.Both);
+				_socketListener.Shutdown(SocketShutdown.Both);
 			}
 		}
-
 
 		private static void HandleNewConnection(Socket clientSocket)
 		{
 			Task.Run(() =>
 			{
-				var resetEvent = ResetEvents.GetOrAdd(clientSocket, (s) => new ManualResetEvent(false));
-
 				var epoint = (IPEndPoint)clientSocket.RemoteEndPoint;
 				clientSocket.ReceiveBufferSize = 1024;
 
@@ -101,8 +100,12 @@ namespace TCP_Tests
 			} 
 			while (clientSocket.Available > 0);
 
-			if (bytesRead == 0)
-				 return;
+			if (counter == 0)
+			{
+				clientSocket.Shutdown(SocketShutdown.Send);
+				clientSocket.Close();
+				return;
+			}
 
 			var list = new List<byte>(buffer.Take(bytesRead));
 
@@ -111,7 +114,12 @@ namespace TCP_Tests
 			Console.WriteLine($"[Thread-{Thread.CurrentThread.ManagedThreadId}][Message]: {message}");
 
 			list.Clear();
-			ResetEvents[clientSocket].Set();
+		}
+
+		private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+		{
+			_socketListener.Shutdown(SocketShutdown.Both);
+			_socketListener.Close(1000);
 		}
 	}
 }
